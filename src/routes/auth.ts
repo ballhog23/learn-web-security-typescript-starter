@@ -14,7 +14,7 @@ import {
   clearSessionCookie,
   setSessionCookie,
 } from "../auth/sessionCookies.ts";
-import { createSession, getCurrentSession } from "../auth/sessions.ts";
+import { createSession, getCurrentSession, revokeSession, getCookie } from "../auth/sessions.ts";
 import { verifyAndConsumeTotpCode } from "../auth/totp.ts";
 import {
   abandonTotpLoginChallenge,
@@ -379,8 +379,17 @@ export function createAuthRouter(deps: Dependencies): Router {
   });
 
   router.post("/logout", (req, res) => {
-    const challengeToken = getTotpLoginChallengeToken(req.header("cookie"));
-    abandonTotpLoginChallenge(db, req.header("cookie"));
+    // get cookie from headers
+    const cookie = req.header("cookie");
+    const currentSession = getCurrentSession(db, cookie);
+    if (currentSession) {
+      // revoke session in db
+      revokeSession(db, currentSession.session.token);
+      logEvent("account_session_revoked", { userId: currentSession.user.id, email: currentSession.user.email });
+    }
+
+    const challengeToken = getTotpLoginChallengeToken(cookie);
+    abandonTotpLoginChallenge(db, cookie);
     clearSessionCookie(res);
     if (challengeToken) {
       clearTotpLoginChallengeCookie(res);
