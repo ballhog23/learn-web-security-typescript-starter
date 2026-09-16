@@ -9,12 +9,14 @@ import {
 import {
   createPasswordResetToken,
   findPasswordResetToken,
+  validatePasswordResetToken,
+  resetPasswordWithToken
 } from "../auth/passwordResetTokens.ts";
 import {
   clearSessionCookie,
   setSessionCookie,
 } from "../auth/sessionCookies.ts";
-import { createSession, getCurrentSession, revokeSession, getCookie } from "../auth/sessions.ts";
+import { createSession, getCurrentSession, revokeSession } from "../auth/sessions.ts";
 import { verifyAndConsumeTotpCode } from "../auth/totp.ts";
 import {
   abandonTotpLoginChallenge,
@@ -397,10 +399,13 @@ export function createAuthRouter(deps: Dependencies): Router {
     res.redirect("/");
   });
 
+  // the reset password form
   router.get("/password-reset", (_req, res) => {
     res.type("html").send(renderPasswordResetRequestPage());
   });
 
+  // on submission of reset link button we post to this endpoint
+  // it creates the token and stores in database
   router.post("/password-reset", (req, res) => {
     const email = normalizeEmail(String(req.body.email ?? ""));
     const user = findUserByEmail(db, email);
@@ -433,10 +438,11 @@ export function createAuthRouter(deps: Dependencies): Router {
       .send(renderPasswordResetRequestConfirmationPage(resetLink));
   });
 
+  // here we validate the token and then allow the user to reset their password on the renderPasswordResetForm view
+  // if validation succeeds
   router.get("/password-reset/:token", (req, res) => {
     const token = String(req.params.token ?? "");
-    const resetToken = findPasswordResetToken(db, token);
-
+    const resetToken = validatePasswordResetToken(db, token);
     if (!resetToken) {
       res
         .status(404)
@@ -450,11 +456,12 @@ export function createAuthRouter(deps: Dependencies): Router {
     res.type("html").send(renderPasswordResetForm(token));
   });
 
+  // here we validate the token again and then the users new password is updated in the database
   router.post("/password-reset/:token", async (req, res) => {
     const token = String(req.params.token ?? "");
     const password = String(req.body.password ?? "");
-    const resetToken = findPasswordResetToken(db, token);
-
+    // we should immediately validate here
+    const resetToken = validatePasswordResetToken(db, token);
     if (!resetToken) {
       res
         .status(404)
@@ -473,6 +480,7 @@ export function createAuthRouter(deps: Dependencies): Router {
         .send(renderPasswordResetForm(token, "Account not found"));
       return;
     }
+
 
     if (password.length < MIN_PASSWORD_LENGTH) {
       res
@@ -500,8 +508,8 @@ export function createAuthRouter(deps: Dependencies): Router {
       return;
     }
 
-    const passwordHash = await hashPassword(password);
-    const passwordResetSucceeded = true;
+    const passwordHash = hashPassword(password);
+    const passwordResetSucceeded = resetPasswordWithToken(db, token, passwordHash);
     if (!passwordResetSucceeded) {
       res
         .status(404)
@@ -511,8 +519,6 @@ export function createAuthRouter(deps: Dependencies): Router {
         );
       return;
     }
-
-    await updateUserPassword(db, user.id, passwordHash);
 
     res.type("html").send(renderPasswordResetCompletePage(user.email));
   });
