@@ -8,7 +8,6 @@ import {
 } from "../auth/passwords.ts";
 import {
   createPasswordResetToken,
-  findPasswordResetToken,
   validatePasswordResetToken,
   resetPasswordWithToken
 } from "../auth/passwordResetTokens.ts";
@@ -416,7 +415,7 @@ export function createAuthRouter(deps: Dependencies): Router {
         success: false,
         failureReason: "email not found",
       });
-      res.type("html").send(renderPasswordResetEmailNotFoundPage());
+      res.type("html").send(renderPasswordResetRequestConfirmationPage());
       return;
     }
 
@@ -435,7 +434,7 @@ export function createAuthRouter(deps: Dependencies): Router {
     });
     res
       .type("html")
-      .send(renderPasswordResetRequestConfirmationPage(resetLink));
+      .send(renderPasswordResetRequestConfirmationPage());
   });
 
   // here we validate the token and then allow the user to reset their password on the renderPasswordResetForm view
