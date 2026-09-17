@@ -54,7 +54,11 @@ export function createAccountRouter(deps: Dependencies): Router {
     if (!current) return;
     const { user } = current;
 
-    logEvent("account_accessed", { userId: user.id, email: user.email, expiresAt: current.session.expires_at });
+    logEvent("account_accessed", {
+      userId: user.id,
+      email: user.email,
+      expiresAt: current.session.expires_at,
+    });
     res.type("html").send(renderAccountPage(current));
   });
 

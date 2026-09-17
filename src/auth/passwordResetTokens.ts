@@ -14,7 +14,7 @@ type CreatedPasswordResetToken = PasswordResetToken & {
 };
 
 function hashPasswordResetToken(token: string): string {
-  return hash('sha256', token, { outputEncoding: 'hex' });
+  return hash("sha256", token, { outputEncoding: "hex" });
 }
 
 export function createPasswordResetToken(
@@ -22,7 +22,7 @@ export function createPasswordResetToken(
   userId: number,
 ): CreatedPasswordResetToken {
   // const token = `${userId}-${Date.now()}`;
-  const token = randomBytes(32).toString('hex');
+  const token = randomBytes(32).toString("hex");
   const tokenHash = hashPasswordResetToken(token);
   // 15 minutes, 60 seconds in a minute, 1000ms in a second: expressed as ms.
   // Date.now() returns time since unix epoch in ms
@@ -86,7 +86,7 @@ export function resetPasswordWithToken(
         `,
       )
       .get(now, hashPasswordResetToken(token), now) as
-      | { user_id: number; }
+      | { user_id: number }
       | undefined;
 
     if (!consumed) {

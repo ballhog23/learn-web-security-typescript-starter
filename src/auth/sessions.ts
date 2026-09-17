@@ -87,8 +87,7 @@ export function getCurrentSession(
     return undefined;
   }
 
-  if (storedSession.revoked_at !== null)
-    return undefined;
+  if (storedSession.revoked_at !== null) return undefined;
 
   const session = { ...storedSession, token };
 

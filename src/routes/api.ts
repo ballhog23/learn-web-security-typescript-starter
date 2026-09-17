@@ -8,6 +8,7 @@ import {
   listOrdersForUser,
 } from "../orders/index.ts";
 import { listAllProducts } from "../products.ts";
+import { findApiKey } from "../auth/apiKeys.ts";
 
 export function createApiRouter(deps: Dependencies): Router {
   const { db } = deps;
@@ -49,7 +50,15 @@ export function createApiRouter(deps: Dependencies): Router {
     res.json({ products: listAllProducts(db) });
   });
 
-  router.get("/api/integrations/warehouse/orders", (_req, res) => {
+  router.get("/api/integrations/warehouse/orders", (req, res) => {
+    const clientApiKey = req.header("x-api-key") ?? "";
+    const storedApiKey = findApiKey(db, clientApiKey);
+    if (!storedApiKey)
+      return res.status(401).json({ error: "Invalid API key" });
+
+    if (!storedApiKey.scope.includes("orders:read"))
+      return res.status(403).json({ error: "Read not authorized" });
+
     const orders = listAllOrders(db).map((order) => ({
       id: order.id,
       status: order.status,
@@ -57,7 +66,7 @@ export function createApiRouter(deps: Dependencies): Router {
       created_at: order.created_at,
     }));
 
-    res.json({
+    return res.json({
       integration: "Warehouse Fulfillment Integration",
       orders,
     });

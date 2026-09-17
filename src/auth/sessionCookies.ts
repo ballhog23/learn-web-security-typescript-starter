@@ -6,7 +6,7 @@ const sessionCookieOptions = {
   path: "/",
   sameSite: "lax",
   httpOnly: true,
-  secure: true
+  secure: true,
 } satisfies CookieOptions;
 
 type CookieSession = {

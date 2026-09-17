@@ -9,13 +9,17 @@ import {
 import {
   createPasswordResetToken,
   validatePasswordResetToken,
-  resetPasswordWithToken
+  resetPasswordWithToken,
 } from "../auth/passwordResetTokens.ts";
 import {
   clearSessionCookie,
   setSessionCookie,
 } from "../auth/sessionCookies.ts";
-import { createSession, getCurrentSession, revokeSession } from "../auth/sessions.ts";
+import {
+  createSession,
+  getCurrentSession,
+  revokeSession,
+} from "../auth/sessions.ts";
 import { verifyAndConsumeTotpCode } from "../auth/totp.ts";
 import {
   abandonTotpLoginChallenge,
@@ -39,13 +43,11 @@ import {
   findUserById,
   getTotpSecret,
   normalizeEmail,
-  updateUserPassword,
 } from "../auth/users.ts";
 import {
   renderLoginPage,
   renderMfaRecoveryPage,
   renderPasswordResetCompletePage,
-  renderPasswordResetEmailNotFoundPage,
   renderPasswordResetForm,
   renderPasswordResetRequestConfirmationPage,
   renderPasswordResetRequestPage,
@@ -386,7 +388,10 @@ export function createAuthRouter(deps: Dependencies): Router {
     if (currentSession) {
       // revoke session in db
       revokeSession(db, currentSession.session.token);
-      logEvent("account_session_revoked", { userId: currentSession.user.id, email: currentSession.user.email });
+      logEvent("account_session_revoked", {
+        userId: currentSession.user.id,
+        email: currentSession.user.email,
+      });
     }
 
     const challengeToken = getTotpLoginChallengeToken(cookie);
@@ -432,9 +437,7 @@ export function createAuthRouter(deps: Dependencies): Router {
       resetToken: token,
       resetLink,
     });
-    res
-      .type("html")
-      .send(renderPasswordResetRequestConfirmationPage());
+    res.type("html").send(renderPasswordResetRequestConfirmationPage());
   });
 
   // here we validate the token and then allow the user to reset their password on the renderPasswordResetForm view
@@ -480,7 +483,6 @@ export function createAuthRouter(deps: Dependencies): Router {
       return;
     }
 
-
     if (password.length < MIN_PASSWORD_LENGTH) {
       res
         .status(400)
@@ -508,7 +510,11 @@ export function createAuthRouter(deps: Dependencies): Router {
     }
 
     const passwordHash = hashPassword(password);
-    const passwordResetSucceeded = resetPasswordWithToken(db, token, passwordHash);
+    const passwordResetSucceeded = resetPasswordWithToken(
+      db,
+      token,
+      passwordHash,
+    );
     if (!passwordResetSucceeded) {
       res
         .status(404)
