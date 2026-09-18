@@ -175,7 +175,7 @@ export function createAccountRouter(deps: Dependencies): Router {
     }
     const currentPassword = String(req.body.currentPassword ?? "");
     const passwordVerified = verifyPassword(currentPassword, current.user.password_hash);
-    if (!passwordVerified) {
+    if (!currentPassword || !passwordVerified) {
       res
         .status(403)
         .type("html")
