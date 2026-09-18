@@ -1,6 +1,8 @@
 import { verifySync } from "otplib";
 import type { DatabaseSync } from "node:sqlite";
 
+const TOTP_PERIOD_SECONDS = 30;
+
 export function verifyTotpCode(code: string, secret: string): boolean {
   if (!code) {
     return false;
@@ -34,10 +36,14 @@ export function consumeTotpTimeStep(
 }
 
 export function verifyAndConsumeTotpCode(
-  _db: DatabaseSync,
-  _userId: number,
+  db: DatabaseSync,
+  userId: number,
   code: string,
   secret: string,
 ): boolean {
-  return verifyTotpCode(code, secret);
+  if (!verifyTotpCode(code, secret))
+    return false;
+  // creates a 30 second window for the TOTP code based on the unix epoch time in seconds.
+  const timeStep = Math.floor(Date.now() / 1000 / TOTP_PERIOD_SECONDS);
+  return consumeTotpTimeStep(db, userId, timeStep);
 }
