@@ -100,7 +100,7 @@ export function createAdminRouter(deps: Dependencies): Router {
   });
 
   router.get("/admin/products/:id/edit", (req, res) => {
-    const current = requireRole(db, req, res, "support", "admin");
+    const current = requireRole(db, req, res, "admin");
     if (!current) {
       return;
     }
@@ -125,7 +125,7 @@ export function createAdminRouter(deps: Dependencies): Router {
   });
 
   router.post("/admin/products/:id", (req, res) => {
-    const current = requireRole(db, req, res, "support", "admin");
+    const current = requireRole(db, req, res, "admin");
     if (!current) {
       return;
     }
@@ -232,8 +232,8 @@ function requireProduct(
 function parseProductInput(
   body: unknown,
 ):
-  | { ok: true; input: ProductInput }
-  | { ok: false; input: ProductInput; error: string } {
+  | { ok: true; input: ProductInput; }
+  | { ok: false; input: ProductInput; error: string; } {
   const form = body as Record<string, unknown>;
   const input: ProductInput = {
     name: String(form.name ?? "").trim(),
