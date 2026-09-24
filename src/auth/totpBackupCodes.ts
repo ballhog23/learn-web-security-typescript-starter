@@ -81,7 +81,7 @@ export function verifyAndConsumeBackupCode(
   userId: number,
   code: string,
 ): boolean {
-  return hasUnusedBackupCode(db, userId, code);
+  return consumeUnusedBackupCode(db, userId, code);
 }
 
 export function countRecentRecoveryAttempts(
@@ -101,7 +101,7 @@ export function countRecentRecoveryAttempts(
           AND created_at > datetime('now', ?)
       `,
     )
-    .get(email, `-${minutes} minutes`) as { count: number };
+    .get(email, `-${minutes} minutes`) as { count: number; };
 
   return row.count;
 }
